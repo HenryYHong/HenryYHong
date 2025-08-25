@@ -1,11 +1,9 @@
 ![banner](https://capsule-render.vercel.app/api?type=waving&color=0:fed136,100:ffb000&height=220&section=header&text=Henry%20Hong&fontSize=52&fontColor=000000&fontAlignY=36&animation=fadeIn)
-## Hi there 👋 I'm Henry
-
-Engineer • Musician • Educator — Berkeley, CA
-
 [![Website](https://img.shields.io/badge/website-henryhong.github.io-1f6feb?style=flat&logo=google-chrome&logoColor=white)](https://henryhong.github.io/)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-henryyhong-0a66c2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/henryyhong/)
 [![Email](https://img.shields.io/badge/Email-hhong%40berkeley.edu-8a2be2?style=flat&logo=gmail&logoColor=white)](mailto:hhong@berkeley.edu)
+
+Engineer • Musician • Educator — Berkeley, CA
 
 ### About me
 - UC Berkeley student double majoring in Computer Science and Cognitive Science; Data Science minor
