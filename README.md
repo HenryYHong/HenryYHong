@@ -6,7 +6,7 @@
 Engineer • Musician • Educator — Berkeley, CA
 
 ### About me
-- UC Berkeley student double majoring in Computer Science and Cognitive Science; Data Science minor
+- Junior at UC Berkeley double majoring in Computer Science and Cognitive Science; Data Science minor
 - Course Director for Data 198 (Intro to Real-World Data Science); UCS1 for Data 100
 - Research at Berkeley AI Research (BAIR), exploring interpretable speech models
 
@@ -14,16 +14,6 @@ Engineer • Musician • Educator — Berkeley, CA
 - Machine learning, data-centric AI, and ML systems
 - Full‑stack projects with clean UX
 - Music and museum hopping in my free time
-
-### Featured projects
-- ASL-Classification — Real-time ASL gesture recognition  
-  https://github.com/HenryYHong/ASL-Classification
-- Strange Attractors — Modeling Lorenz, Hénon, and Rössler systems  
-  https://github.com/HenryYHong/Comp-Physics-Capstone-Project---Strange-Attractors
-- Deep Oculos (team) — GAN + LSTM for retinal motion and disease traces  
-  https://github.com/MarcusUniversee/DeepOculos
-- DSS Internal (team) — Member directory with GNN recommendations  
-  https://github.com/thomasychen/DSS-Internal
 
 ### Toolbox
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
