@@ -3,10 +3,10 @@
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-henryyhong-0a66c2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/henryyhong/)
 [![Email](https://img.shields.io/badge/Email-hhong%40berkeley.edu-8a2be2?style=flat&logo=gmail&logoColor=white)](mailto:hhong@berkeley.edu)
 
-Engineer • Musician • Educator — Berkeley, CA
+Engineer • Scientist • Educator — Berkeley, CA
 
 ### About me
-- Junior at UC Berkeley double majoring in Computer Science and Cognitive Science; Data Science minor
+- Junior at UC Berkeley double majoring in Computer Science and Data Science with a Cogntion Domain Emphasis
 - Course Director for Data 198 (Intro to Real-World Data Science); UCS1 for Data 100
 - Research at Berkeley AI Research (BAIR), exploring interpretable speech models
 
