@@ -1,17 +1,17 @@
 ![banner](https://capsule-render.vercel.app/api?type=waving&color=0:fed136,100:ffb000&height=220&section=header&text=Henry%20Hong&fontSize=52&fontColor=000000&fontAlignY=36&animation=fadeIn)
-[![Website](https://img.shields.io/badge/website-henryhong.github.io-1f6feb?style=flat&logo=google-chrome&logoColor=white)](https://henryhong.github.io/)
+[![Website](https://img.shields.io/badge/website-henryyhong.github.io-1f6feb?style=flat&logo=google-chrome&logoColor=white)](https://henryhong.github.io/)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-henryyhong-0a66c2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/henryyhong/)
 [![Email](https://img.shields.io/badge/Email-hhong%40berkeley.edu-8a2be2?style=flat&logo=gmail&logoColor=white)](mailto:hhong@berkeley.edu)
 
-Engineer • Scientist • Educator — Berkeley, CA
+Engineer • Educator — Berkeley, CA
 
 ### About me
-- Junior at UC Berkeley double majoring in Computer Science and Data Science with a Cogntion Domain Emphasis
-- Course Director for Data 198 (Intro to Real-World Data Science); UCS1 for Data 100
+- Senior at UC Berkeley double majoring in Computer Science and Data Science with a Cogntion Domain Emphasis
+- UCS2/TA for Data 102; 3x UCS1/Tutor for Data 100; Past Course Director for Data 198 (Intro to Real-World Data Science)
 - Research at Berkeley AI Research (BAIR), exploring interpretable speech models
 
 ### What I’m into
-- Machine learning, data-centric AI, and ML systems
+- Data-centric AI and ML systems
 - Full‑stack projects with clean UX
 - Music and museum hopping in my free time
 
