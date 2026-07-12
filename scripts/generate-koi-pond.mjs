@@ -54,6 +54,10 @@ const MONTHS = [
   "Dec",
 ];
 
+const KOI_HEAD_X = 27;
+const KOI_LENGTH = 66;
+const KOI_POINTS = 18;
+
 function escapeXml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -70,6 +74,10 @@ function levelForDay(day) {
 function seededNoise(seed) {
   const x = Math.sin(seed * 999) * 10000;
   return x - Math.floor(x);
+}
+
+function fmt(value) {
+  return Number(value).toFixed(2).replace(/\.?0+$/, "");
 }
 
 function buildDemoCalendar() {
@@ -212,15 +220,94 @@ function getMonthLabels(weeks, left, top, step) {
   return labels;
 }
 
+function koiBodyWidth(t) {
+  const peakT = 0.2;
+  const neckW = 1.14 * 0.95;
+
+  if (t <= peakT) {
+    const ht = t / peakT;
+    return neckW * (0.58 + 0.42 * Math.pow(ht, 0.9));
+  }
+
+  const cone = (t - peakT) / (1 - peakT);
+  return neckW * Math.max(0.025, 1 - cone);
+}
+
+function smoothThrough(points, move = true) {
+  if (!points.length) return "";
+  if (points.length === 1) return `${move ? "M" : "L"} ${fmt(points[0].x)} ${fmt(points[0].y)}`;
+
+  let d = move ? `M ${fmt(points[0].x)} ${fmt(points[0].y)}` : "";
+  if (!move) d += ` L ${fmt(points[0].x)} ${fmt(points[0].y)}`;
+
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const mid = {
+      x: (points[i].x + points[i + 1].x) * 0.5,
+      y: (points[i].y + points[i + 1].y) * 0.5,
+    };
+    d += ` Q ${fmt(points[i].x)} ${fmt(points[i].y)} ${fmt(mid.x)} ${fmt(mid.y)}`;
+  }
+
+  const last = points[points.length - 1];
+  d += ` L ${fmt(last.x)} ${fmt(last.y)}`;
+  return d;
+}
+
+function koiBodyPath(hw) {
+  const top = [];
+  const bottom = [];
+  const nose = { x: KOI_HEAD_X + hw * 0.42, y: 0 };
+
+  for (let i = 0; i < KOI_POINTS; i += 1) {
+    const t = i / (KOI_POINTS - 1);
+    const x = KOI_HEAD_X - KOI_LENGTH * t;
+    const centerY = Math.sin(t * Math.PI * 1.15) * hw * 0.05;
+    const w = koiBodyWidth(t) * hw;
+    top.push({ x, y: centerY - w });
+    bottom.unshift({ x, y: centerY + w });
+  }
+
+  return `${smoothThrough(top)} Q ${fmt(KOI_HEAD_X - KOI_LENGTH - hw * 0.18)} 0 ${fmt(bottom[0].x)} ${fmt(bottom[0].y)} ${smoothThrough(bottom.slice(1), false)} Q ${fmt(nose.x)} ${fmt(nose.y)} ${fmt(top[0].x)} ${fmt(top[0].y)} Z`;
+}
+
+function renderScaleTexture(hw, color) {
+  const scales = [];
+
+  for (let row = 0.24; row <= 0.76; row += 0.12) {
+    const x = KOI_HEAD_X - KOI_LENGTH * row;
+    const centerY = Math.sin(row * Math.PI * 1.15) * hw * 0.05;
+    const bodyW = koiBodyWidth(row) * hw * 0.7;
+    const cols = Math.max(2, Math.floor(bodyW / 2.7));
+
+    for (let col = 0; col < cols; col += 1) {
+      const lateral = (col + 0.5) / cols - 0.5;
+      const y = centerY + lateral * bodyW * 1.55;
+      scales.push(
+        `<circle cx="${fmt(x + ((col % 2) - 0.5) * 0.55)}" cy="${fmt(y)}" r="${fmt(0.52 + hw * 0.012)}" fill="${color}" />`,
+      );
+    }
+  }
+
+  return scales.join("\n");
+}
+
 function renderPad(day, x, y, cell, theme, weekIndex) {
   const level = levelForDay(day);
   const count = day.contributionCount;
   const angle = ((weekIndex * 23 + day.weekday * 31) % 36) - 18;
-  const scale = count > 0 ? 1 + level * 0.045 : 0.84;
+  const scale = count > 0 ? 1 + level * 0.04 : 0.72;
   const fill = theme.pads[level];
   const rx = (cell * 0.48).toFixed(2);
   const ry = (cell * 0.4).toFixed(2);
   const title = `${day.date}: ${count} contribution${count === 1 ? "" : "s"}`;
+
+  if (level === 0) {
+    return `
+    <g transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle}) scale(${scale.toFixed(2)})" opacity="0.36">
+      <title>${escapeXml(title)}</title>
+      <ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="none" stroke="${theme.ripple}" stroke-width="0.8" />
+    </g>`;
+  }
 
   const flower =
     level >= 3
@@ -243,24 +330,79 @@ function renderPad(day, x, y, cell, theme, weekIndex) {
     </g>`;
 }
 
-function renderKoi({ path, duration, delay, scale, base, accent, spot, spotAlt, fin }) {
+function renderKoiPatch(patch) {
+  return `
+          <g transform="translate(${fmt(patch.x)} ${fmt(patch.y)}) rotate(${fmt(patch.rot || 0)})">
+            <ellipse cx="0" cy="0" rx="${fmt(patch.rx)}" ry="${fmt(patch.ry)}" fill="${patch.fill}" opacity="${patch.opacity ?? 0.96}" />
+            <ellipse cx="${fmt(-patch.rx * 0.08)}" cy="${fmt(patch.ry * 0.08)}" rx="${fmt(patch.rx * 0.58)}" ry="${fmt(patch.ry * 0.46)}" fill="${patch.shade}" opacity="0.7" />
+          </g>`;
+}
+
+function renderKoi({
+  id,
+  path,
+  duration,
+  delay,
+  scale,
+  bodyStops,
+  finStops,
+  dorsalColor,
+  scaleColor,
+  patches,
+}) {
+  const hw = 12;
+  const bodyPath = koiBodyPath(hw);
+  const bodyId = `${id}-body`;
+  const finId = `${id}-fin`;
+  const clipId = `${id}-clip`;
+  const tailX = KOI_HEAD_X - KOI_LENGTH;
+
   return `
     <g opacity="0.96" filter="url(#softShadow)">
       <animateMotion dur="${duration}s" begin="${delay}s" repeatCount="indefinite" rotate="auto" path="${path}" />
       <g transform="scale(${scale})">
-        <path d="M -20 0 L -39 -10 Q -33 0 -39 10 Z" fill="${fin}" opacity="0.82" />
-        <path d="M -7 -7 C 0 -20 14 -17 10 -5 Z" fill="${fin}" opacity="0.58" />
-        <path d="M -7 7 C 0 20 14 17 10 5 Z" fill="${fin}" opacity="0.58" />
-        <ellipse cx="-2" cy="0" rx="24" ry="9.5" fill="${base}" stroke="rgba(35,34,26,0.24)" stroke-width="1" />
-        <ellipse cx="18" cy="0" rx="9.5" ry="8.2" fill="${base}" stroke="rgba(35,34,26,0.18)" stroke-width="0.8" />
-        <ellipse cx="-10" cy="-2.6" rx="8" ry="4.8" transform="rotate(-13 -10 -2.6)" fill="${spot}" opacity="0.94" />
-        <ellipse cx="3" cy="3.2" rx="9" ry="4.7" transform="rotate(10 3 3.2)" fill="${spotAlt}" opacity="0.9" />
-        <ellipse cx="14" cy="-1.8" rx="5" ry="3" transform="rotate(-15 14 -1.8)" fill="${spot}" opacity="0.78" />
-        <path d="M -18 0 C -8 -2.2, 6 -2.2, 19 0" fill="none" stroke="${accent}" stroke-width="1.2" stroke-linecap="round" opacity="0.56" />
-        <circle cx="23" cy="-2.4" r="1.1" fill="#2b2118" opacity="0.82" />
-        <circle cx="23" cy="2.4" r="1.1" fill="#2b2118" opacity="0.82" />
-        <path d="M 26 -2.7 C 32 -6, 35 -8.5, 39 -11" fill="none" stroke="${accent}" stroke-width="1" stroke-linecap="round" opacity="0.62" />
-        <path d="M 26 2.7 C 32 6, 35 8.5, 39 11" fill="none" stroke="${accent}" stroke-width="1" stroke-linecap="round" opacity="0.62" />
+        <defs>
+          <linearGradient id="${bodyId}" x1="-42" x2="34" y1="-16" y2="16" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="${bodyStops[0]}" />
+            <stop offset="35%" stop-color="${bodyStops[1]}" />
+            <stop offset="68%" stop-color="${bodyStops[2]}" />
+            <stop offset="100%" stop-color="${bodyStops[3]}" />
+          </linearGradient>
+          <linearGradient id="${finId}" x1="-42" x2="18" y1="0" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="${finStops[2]}" />
+            <stop offset="48%" stop-color="${finStops[1]}" />
+            <stop offset="100%" stop-color="${finStops[0]}" />
+          </linearGradient>
+          <clipPath id="${clipId}" clipPathUnits="userSpaceOnUse">
+            <path d="${bodyPath}" />
+          </clipPath>
+        </defs>
+
+        <g transform="translate(${fmt(tailX - 1)} 0)" opacity="0.82">
+          <g>
+            <animateTransform attributeName="transform" type="rotate" values="-7;7;-7" dur="1.9s" repeatCount="indefinite" />
+            <path d="M 2 0 C -8 -13 -22 -14 -29 -4 C -18 -4 -8 -1 2 0 Z" fill="url(#${finId})" />
+            <path d="M 2 0 C -8 13 -22 14 -29 4 C -18 4 -8 1 2 0 Z" fill="url(#${finId})" />
+          </g>
+        </g>
+
+        <path d="M 3 -8.6 C -5 -20 -18 -17 -15 -5 C -8 -6 0 -5.6 5 -3.8 Z" fill="url(#${finId})" opacity="0.62" />
+        <path d="M 3 8.6 C -5 20 -18 17 -15 5 C -8 6 0 5.6 5 3.8 Z" fill="url(#${finId})" opacity="0.62" />
+
+        <path d="${bodyPath}" fill="url(#${bodyId})" stroke="rgba(38,34,26,0.22)" stroke-width="0.9" />
+        <g clip-path="url(#${clipId})">
+          ${renderScaleTexture(hw, scaleColor)}
+          ${(patches || []).map(renderKoiPatch).join("\n")}
+        </g>
+
+        <path d="M 18 0 C 7 -1.6 -9 -1.8 -30 0.4" fill="none" stroke="${dorsalColor}" stroke-width="1.25" stroke-linecap="round" opacity="0.78" />
+        <path d="M 18 -0.3 C 8 1.1 -11 1.4 -31 -0.4" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.55" stroke-linecap="round" opacity="0.55" />
+        <circle cx="28.5" cy="-3.8" r="1.15" fill="#2b2118" opacity="0.86" />
+        <circle cx="28.5" cy="3.8" r="1.15" fill="#2b2118" opacity="0.86" />
+        <circle cx="28.85" cy="-4.15" r="0.33" fill="#fff6e6" opacity="0.9" />
+        <circle cx="28.85" cy="3.45" r="0.33" fill="#fff6e6" opacity="0.9" />
+        <path d="M 31.2 -3.4 C 35.4 -5.2 38.4 -7.4 41.8 -10" fill="none" stroke="${dorsalColor}" stroke-width="0.78" stroke-linecap="round" opacity="0.64" />
+        <path d="M 31.2 3.4 C 35.4 5.2 38.4 7.4 41.8 10" fill="none" stroke="${dorsalColor}" stroke-width="0.78" stroke-linecap="round" opacity="0.64" />
       </g>
     </g>`;
 }
@@ -316,37 +458,44 @@ function renderSvg(calendar, mode) {
 
   const koi = [
     renderKoi({
+      id: `${idSuffix}-kohaku`,
       path: `M ${left - 10} ${top + 25} C ${left + 160} ${top - 18}, ${left + 295} ${top + 112}, ${left + 475} ${top + 68} S ${left + 735} ${top - 8}, ${left + gridWidth + 12} ${top + 74} C ${left + 720} ${top + 148}, ${left + 430} ${top + 126}, ${left + 220} ${top + 154} S ${left + 28} ${top + 122}, ${left - 10} ${top + 25}`,
       duration: 34,
       delay: -8,
       scale: 1.08,
-      base: "#f8f2df",
-      accent: "#b54a2e",
-      spot: "#d84a25",
-      spotAlt: "#f08a24",
-      fin: "#f3b46a",
+      bodyStops: ["#ded8cc", "#fff9ee", "#f4eadb", "#d0c5b5"],
+      finStops: ["#f8f4eb", "#e0d8cc", "#bcb0a0"],
+      dorsalColor: "rgba(210, 202, 190, 0.78)",
+      scaleColor: "rgba(126, 114, 98, 0.08)",
+      patches: [
+        { x: 8, y: -4.6, rx: 8.6, ry: 4.7, rot: -14, fill: "#d63f28", shade: "rgba(150, 36, 22, 0.18)" },
+        { x: -8.5, y: 3.4, rx: 10.5, ry: 5.3, rot: 12, fill: "#e15c2c", shade: "rgba(154, 54, 22, 0.16)" },
+        { x: 19.5, y: 1.3, rx: 4.8, ry: 3.2, rot: -18, fill: "#ef7a2d", shade: "rgba(160, 70, 20, 0.16)" },
+      ],
     }),
     renderKoi({
+      id: `${idSuffix}-yamabuki`,
       path: `M ${left + gridWidth - 20} ${top + 138} C ${left + 690} ${top + 62}, ${left + 520} ${top + 166}, ${left + 330} ${top + 105} S ${left + 96} ${top + 38}, ${left + 10} ${top + 138} C ${left + 170} ${top + 178}, ${left + 535} ${top + 176}, ${left + gridWidth - 20} ${top + 138}`,
       duration: 41,
       delay: -20,
       scale: 0.92,
-      base: "#d59c26",
-      accent: "#8b5b15",
-      spot: "#f7c75c",
-      spotAlt: "#b87418",
-      fin: "#e7ad3c",
+      bodyStops: ["#d7ac43", "#ffe8a1", "#e0a534", "#a96f1b"],
+      finStops: ["#ffe086", "#e6aa48", "#aa6a22"],
+      dorsalColor: "rgba(218, 146, 36, 0.68)",
+      scaleColor: "rgba(92, 58, 20, 0.09)",
+      patches: [],
     }),
     renderKoi({
+      id: `${idSuffix}-orange`,
       path: `M ${left + 55} ${top + 112} C ${left + 210} ${top + 54}, ${left + 335} ${top + 190}, ${left + 515} ${top + 128} S ${left + 735} ${top + 74}, ${left + gridWidth - 60} ${top + 30} C ${left + 765} ${top + 106}, ${left + 565} ${top + 32}, ${left + 376} ${top + 72} S ${left + 128} ${top + 164}, ${left + 55} ${top + 112}`,
       duration: 47,
       delay: -31,
       scale: 0.82,
-      base: "#f28c28",
-      accent: "#9d3e1f",
-      spot: "#fff0ce",
-      spotAlt: "#c43d24",
-      fin: "#f6b06a",
+      bodyStops: ["#bd612b", "#e88a3b", "#c86c2d", "#88421f"],
+      finStops: ["#da7630", "#a6481c", "#642a14"],
+      dorsalColor: "rgba(184, 82, 32, 0.62)",
+      scaleColor: "rgba(70, 34, 14, 0.08)",
+      patches: [],
     }),
   ].join("\n");
 
