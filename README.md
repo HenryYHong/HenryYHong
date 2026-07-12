@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:fed136,100:ffb000&height=220&section=header&text=Henry%20Hong&fontSize=52&fontColor=000000&fontAlignY=36&animation=fadeIn" alt="Henry Hong banner" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:9bdc7d,100:2e793a&height=220&section=header&text=Henry%20Hong&fontSize=52&fontColor=ffffff&fontAlignY=36&animation=fadeIn" alt="Henry Hong banner" />
 </p>
 
 <p align="center">
