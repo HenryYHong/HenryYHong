@@ -20,6 +20,14 @@
   UC Berkeley Computer Science + Data Science student interested in machine learning, software engineering, AI research, and thoughtful user experiences.
 </p>
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HenryYHong/HenryYHong/output/koi-pond-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/HenryYHong/HenryYHong/output/koi-pond.svg" />
+    <img alt="Koi pond visualization of Henry Hong's GitHub contributions" src="https://raw.githubusercontent.com/HenryYHong/HenryYHong/output/koi-pond.svg" />
+  </picture>
+</p>
+
 ---
 
 ## About Me
